@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
+<title>Paper Wallet</title>
+<meta name="theme-color" content="#000000">
+<link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Paper Wallet">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+  :root{
+    --purple:#AB9FF2; --card:#141416; --chip:#1C1C1E;
+    --grey:#8E8E93; --green:#3ECF6B; --red:#FF453A;
+    --top: env(safe-area-inset-top);
+    --bot: env(safe-area-inset-bottom);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0;background:#000;height:100%;overflow:hidden;overscroll-behavior:none}
+  body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Inter,system-ui,sans-serif;
+       color:#fff;-webkit-font-smoothing:antialiased}
+  button,input{font:inherit;color:inherit}
+  button{background:none;border:0;padding:0;cursor:pointer}
+
+  /* iPhone 12 logical viewport: 390 x 844 */
+  .app{position:relative;width:100%;max-width:390px;height:100vh;height:100dvh;margin:0 auto;
+       display:flex;flex-direction:column;overflow:hidden;background:#000}
+  main{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
+  .scroll{padding-bottom:120px}
+
+  .row{display:flex;align-items:center}
+  .hs{display:flex;gap:12px;overflow-x:auto;scrollbar-width:none}
+  .hs::-webkit-scrollbar{display:none}
+  .tabular{font-variant-numeric:tabular-nums}
+  .green{color:var(--green)} .red{color:var(--red)} .grey{color:var(--grey)}
+
+  .nav{display:flex;align-items:center;gap:8px;padding:calc(var(--top) + 14px) 16px 12px;
+       overflow-x:auto;scrollbar-width:none;flex:none}
+  .nav::-webkit-scrollbar{display:none}
+  .tab{flex:none;height:40px;padding:0 18px;border-radius:999px;font-size:16px;font-weight:600;
+       background:var(--chip);color:var(--grey)}
+  .tab.on{background:var(--purple);color:#000}
+
+  .sechead{padding:0 16px;margin:24px 0 10px}
+  .sechead h2{margin:0;font-size:22px;font-weight:700;letter-spacing:-.4px;display:flex;align-items:center;gap:6px}
+  .sechead .sub{color:var(--grey);font-size:13px;margin-top:3px}
+  .card{background:var(--card);border-radius:20px}
+  .pad{padding:0 16px}
+
+  .balance{font-size:44px;font-weight:700;letter-spacing:-1.2px;line-height:1}
+  .editdot{width:28px;height:28px;border-radius:999px;background:var(--chip);color:var(--purple);
+           display:flex;align-items:center;justify-content:center;font-size:13px}
+  .pill{background:#FF3B30;color:#fff;font-size:14px;font-weight:500;padding:1px 7px;border-radius:6px}
+  .listrow{display:flex;align-items:center;gap:12px;padding:12px 16px}
+  .sym{font-size:16px;font-weight:600}
+  .mc{color:var(--grey);font-size:13px}
+  .price{font-size:16px}
+  .chg{font-size:14px;font-weight:500}
+  .icon{border-radius:999px;display:flex;align-items:center;justify-content:center;flex:none;overflow:hidden}
+  .sq{border-radius:14px}
+  .perp{background:var(--card);border-radius:20px;padding:16px;min-width:132px;flex:none}
+  .lev{background:#2C2C2E;font-size:12px;padding:1px 7px;border-radius:6px}
+  .predcard{background:var(--card);border-radius:20px;padding:16px;min-width:210px;flex:none}
+  .filter{flex:none;height:38px;padding:0 16px;border-radius:999px;background:var(--card);
+          font-size:15px;font-weight:500;white-space:nowrap}
+  .filter.on{background:#fff;color:#000}
+  .rank{position:absolute;bottom:-3px;left:-3px;width:17px;height:17px;border-radius:999px;
+        display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#000}
+  .badge{width:14px;height:14px;border-radius:999px;background:var(--purple);color:#fff;font-size:8px;
+         display:inline-flex;align-items:center;justify-content:center}
+  .skel{height:30px;border-radius:10px;background:var(--card)}
+
+  .bottom{position:absolute;left:0;right:0;bottom:0;display:flex;gap:10px;align-items:center;
+          padding:28px 16px calc(var(--bot) + 14px);
+          background:linear-gradient(to top,#000 58%,rgba(0,0,0,0));pointer-events:none}
+  .bottom>*{pointer-events:auto}
+  .search{flex:1;height:48px;border-radius:999px;background:rgba(28,28,30,.94);backdrop-filter:blur(12px);
+          display:flex;align-items:center;gap:10px;padding:0 18px;color:var(--grey);font-size:16px}
+  .fab{width:48px;height:48px;border-radius:999px;background:var(--purple);color:#000;
+       display:flex;align-items:center;justify-content:center;font-size:26px;flex:none}
+
+  .overlay{position:absolute;inset:0;z-index:20}
+  .scrim{position:absolute;inset:0;background:rgba(0,0,0,.65)}
+  .menu{position:absolute;inset:0 auto 0 0;width:80%;background:#000;
+        padding:calc(var(--top) + 22px) 20px calc(var(--bot) + 22px);display:flex;flex-direction:column;
+        transform:translateX(-100%);animation:slidein .22s ease forwards}
+  @keyframes slidein{to{transform:translateX(0)}}
+  .menu nav{margin-top:26px;display:flex;flex-direction:column;gap:22px}
+  .menu nav button,.menuend button{display:flex;align-items:center;gap:14px;font-size:20px;font-weight:500}
+  .menuend{margin-top:auto;display:flex;flex-direction:column;gap:22px}
+
+  .sheet{position:absolute;left:0;right:0;bottom:0;background:var(--card);border-radius:28px 28px 0 0;
+         padding:20px 20px calc(var(--bot) + 22px);transform:translateY(100%);
+         animation:up .24s cubic-bezier(.2,.8,.3,1) forwards}
+  @keyframes up{to{transform:translateY(0)}}
+  .grab{width:38px;height:4px;border-radius:999px;background:#3A3A3E;margin:0 auto 18px}
+  .field{margin-top:6px;height:50px;background:#000;border-radius:14px;display:flex;align-items:center;padding:0 14px;gap:4px}
+  .field input{background:none;border:0;outline:none;width:100%;font-size:19px;font-variant-numeric:tabular-nums}
+  .label{color:var(--grey);font-size:13px;margin-top:14px;display:block}
+  .quick{display:flex;gap:8px;margin-top:16px}
+  .quick button{flex:1;background:var(--chip);border-radius:999px;padding:10px 0;font-size:14px;font-weight:500}
+  .save{width:100%;border-radius:999px;padding:14px 0;margin-top:18px;background:var(--purple);color:#000;
+        font-size:17px;font-weight:600}
+  .ghost{width:100%;border-radius:999px;padding:14px 0;margin-top:8px;background:var(--chip);font-size:17px}
+
+  /* lock screen */
+  .lock{position:absolute;inset:0;z-index:50;background:#000;display:flex;flex-direction:column;
+        align-items:center;padding:calc(var(--top) + 60px) 24px calc(var(--bot) + 20px)}
+  .lock h1{margin:0;font-size:21px;font-weight:500;letter-spacing:-.2px}
+  .lock .hint{margin-top:8px;font-size:14px;color:var(--grey);min-height:18px;text-align:center}
+  .dots{display:flex;gap:22px;margin:26px 0 auto}
+  .dot{width:13px;height:13px;border-radius:999px;border:1.4px solid #fff}
+  .dot.on{background:#fff}
+  .shake{animation:shake .4s}
+  @keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-11px)}
+    40%{transform:translateX(11px)}60%{transform:translateX(-7px)}80%{transform:translateX(7px)}}
+  .keys{display:grid;grid-template-columns:repeat(3,76px);gap:18px 24px;justify-content:center}
+  .key{width:76px;height:76px;border-radius:999px;background:rgba(255,255,255,.13);
+       display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1}
+  .key:active{background:rgba(255,255,255,.3)}
+  .key b{font-size:33px;font-weight:400}
+  .key i{font-size:10px;letter-spacing:2px;font-style:normal;margin-top:3px;opacity:.85}
+  .keyrow{display:grid;grid-template-columns:repeat(3,76px);gap:24px;justify-content:center;margin-top:18px;
+          align-items:center}
+  .keyrow button{font-size:17px;height:76px}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important}}
+</style>
+</head>
+<body>
+<div class="app" id="app"></div>
+
+<script>
+/* ---------------- storage + state ---------------- */
+const SOL_PRICE = 97.9;
+const store = {
+  get(k,d){ try{ const v=localStorage.getItem(k); return v===null?d:JSON.parse(v);}catch(e){return d;} },
+  set(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} },
+  del(k){ try{ localStorage.removeItem(k);}catch(e){} }
+};
+
+const S = {
+  tab:'Home', filter:'Trending',
+  menu:false, editing:false, settings:false,
+  cash: store.get('cash',14.41),
+  sol:  store.get('sol',0.00143),
+  countdown: 46,
+  /* lock */
+  locked: true,
+  mode: store.get('pin',null) ? 'unlock' : 'create',
+  buffer:'', firstEntry:'', hint:'', shake:false,
+};
+
+const total = () => S.cash + S.sol*SOL_PRICE;
+const usd = n => n.toLocaleString('en-US',{style:'currency',currency:'USD',minimumFractionDigits:2,maximumFractionDigits:2});
+const chg = v => `<span class="${v>=0?'green':'red'} chg tabular">${v>=0?'+':''}${v.toFixed(2)}%</span>`;
+
+/* ---------------- art + charts ---------------- */
+const art = {
+  cat:'#1B1740|🐱', cat2:'#EFEFEF|🐈', duck:'#fff|🦆', pons:'#fff|⬜', opt:'#C0142B|⚫', goon:'#2A2A2E|🪙'
+};
+function tok(kind,size=40){
+  const [bg,em] = (art[kind]||art.goon).split('|');
+  return `<div class="icon" style="width:${size}px;height:${size}px;background:${bg};font-size:${Math.round(size*.52)}px">${em}</div>`;
+}
+const rankColors={1:['#F5C531','#8A6A00'],2:['#D6D6DC','#6E6E76'],3:['#E9622C','#8A3208']};
+const rank = r => r?`<div class="rank" style="background:${rankColors[r][0]};border:1.4px solid ${rankColors[r][1]}">${r}</div>`:'';
+
+const avatar = (size=44) => `
+<div class="icon" style="width:${size}px;height:${size}px;background:#7ACFA8;align-items:flex-end">
+  <div style="position:relative;width:${size*.62}px;height:${size*.72}px;background:#FFF6C4;
+       border-radius:${size*.31}px ${size*.31}px ${size*.1}px ${size*.1}px">
+    <i style="position:absolute;width:${size*.07}px;height:${size*.07}px;border-radius:50%;background:#000;left:${size*.16}px;top:${size*.34}px"></i>
+    <i style="position:absolute;width:${size*.07}px;height:${size*.07}px;border-radius:50%;background:#000;left:${size*.36}px;top:${size*.34}px"></i>
+  </div>
+</div>`;
+
+function walk(seed,n,drift){ let x=seed,v=50; const o=[];
+  for(let i=0;i<n;i++){ x=(x*1103515245+12345)%2147483648; v+=((x/2147483648)-.5)*9+drift; o.push(v);} return o; }
+function spark(seed,w=170,h=44,dash=true){
+  const p=walk(seed,44,.5), mn=Math.min(...p), mx=Math.max(...p);
+  const d=p.map((v,i)=>`${i?'L':'M'}${((i/(p.length-1))*w).toFixed(1)},${(h-((v-mn)/(mx-mn||1))*h).toFixed(1)}`).join(' ');
+  return `<svg width="${w}" height="${h}">${dash?`<line x1="0" y1="${h*.55}" x2="${w}" y2="${h*.55}" stroke="#3A3A3E" stroke-dasharray="3 4"/>`:''}
+    <path d="${d}" fill="none" stroke="#5BD07A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+}
+function bigline(h=190){
+  const w=340,p=walk(3,60,1.6),mn=Math.min(...p),mx=Math.max(...p);
+  const c=p.map((v,i)=>[(i/(p.length-1))*w, h-((v-mn)/(mx-mn||1))*(h-20)-10]);
+  const d=c.map((q,i)=>`${i?'L':'M'}${q[0].toFixed(1)},${q[1].toFixed(1)}`).join(' ');
+  const L=c[c.length-1];
+  return `<svg viewBox="0 0 ${w} ${h}" style="width:100%;height:${h}px">
+    <path d="${d}" fill="none" stroke="#5BD07A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="${L[0]}" cy="${L[1]}" r="10" fill="#5BD07A" opacity=".25"/>
+    <circle cx="${L[0]}" cy="${L[1]}" r="5" fill="#5BD07A"/></svg>`;
+}
+
+/* ---------------- market data ---------------- */
+const trending=[
+  {sym:'AI',mc:'$233M MC',price:'0.23669',c:26.06,r:1,a:'cat'},
+  {sym:'microduck',mc:'$36M MC',price:'0.03575',c:139.3,r:2,a:'duck'},
+  {sym:'PONS',mc:'$357M MC',price:'0.3531',c:-17.28,r:3,a:'pons'},
+  {sym:'CASHCAT',mc:'$268M MC',price:'0.26772',c:27.70,a:'cat2'},
+  {sym:'OPTIMUS',mc:'$91M MC',price:'0.00907',c:1250.0,a:'opt'},
+  {sym:'GOONC',mc:'$18M MC',price:'0.01822',c:64.10,a:'goon'}];
+const exploreTrending=[
+  {sym:'AI',mc:'$230M MC',price:'0.23483',c:23.82,r:1,a:'cat'},
+  {sym:'PONS',mc:'$356M MC',price:'0.35595',c:-16.59,r:2,a:'pons',v:1},
+  {sym:'microduck',mc:'$36M MC',price:'0.03605',c:141.3,r:3,a:'duck'}];
+
+const tokenRow = t => `
+<div class="listrow">
+  <div style="position:relative">${tok(t.a,40)}${rank(t.r)}</div>
+  <div style="flex:1;min-width:0">
+    <div class="sym">${t.sym}${t.v?' <span class="badge">✓</span>':''}</div>
+    <div class="mc">${t.mc}</div>
+  </div>
+  <div style="text-align:right"><div class="price tabular">$${t.price}</div>${chg(t.c)}</div>
+</div>`;
+const head = (t,sub) => `<div class="sechead"><h2>${t} <span style="opacity:.9;font-size:18px">›</span></h2>${sub?`<div class="sub">👤 ${sub}</div>`:''}</div>`;
+
+/* ---------------- screens ---------------- */
+function Home(){
+  const t=total(), delta=-0.004877, pct = t>0 ? delta/t*100 : 0;
+  return `<div class="scroll">
+  <div class="pad" style="padding-top:6px">
+    <button class="grey" style="font-size:16px">Account 1 ⌄</button>
+    <button data-act="edit" style="display:block;width:100%;text-align:left;margin-top:4px">
+      <div class="row" style="gap:10px"><span class="balance tabular">${usd(t)}</span><span class="editdot">✎</span></div>
+      <div class="row" style="gap:8px;margin-top:10px">
+        <span class="red tabular" style="font-size:16px">-$${Math.abs(delta).toFixed(6)}</span>
+        <span class="pill tabular">${pct.toFixed(2)}%</span>
+      </div>
+    </button>
+  </div>
+  <div class="pad" style="margin-top:22px">
+    <div class="card row" style="padding:16px;gap:12px">
+      <div class="icon sq" style="width:38px;height:38px;background:#2C2C2E;font-size:17px">💵</div>
+      <span style="flex:1;font-size:18px;font-weight:600">Cash</span>
+      <span class="tabular" style="font-size:18px">${usd(S.cash)}</span>
+    </div>
+  </div>
+  ${head('Tokens')}
+  <div class="pad"><div class="card row" style="padding:13px 16px;gap:12px">
+    <div class="icon" style="width:38px;height:38px;background:linear-gradient(135deg,#9945FF,#14F195);font-size:16px;font-weight:700">◎</div>
+    <div style="flex:1"><div class="sym">Solana</div><div class="mc tabular">${S.sol.toFixed(5)} SOL</div></div>
+    <div style="text-align:right"><div class="price tabular">${usd(S.sol*SOL_PRICE)}</div>
+      <div class="red" style="font-size:13px">-&lt;$0.01</div></div>
+  </div></div>
+  ${head('Perps')}
+  <div class="hs pad">${[['BTC','40x',-1.57,'₿','#F7931A'],['ETH','25x',-3.22,'Ξ','#2B2F36'],['HYPE','20x',-2.41,'H','#97FCE4']].map(p=>`
+    <div class="perp">
+      <div class="icon" style="width:40px;height:40px;background:${p[4]};font-size:19px;margin-bottom:18px">${p[3]}</div>
+      <div class="row" style="gap:7px"><span style="font-size:18px;font-weight:600">${p[0]}</span><span class="lev">${p[1]}</span></div>
+      ${chg(p[2])}
+    </div>`).join('')}</div>
+  ${head('Predictions')}
+  <div class="hs pad">${[['Italian Grand Prix','in 6d','🏎️','#F5C531'],['San Diego vs Chicago','in 6h','⚾','#C0142B']].map(p=>`
+    <div class="predcard">
+      <div class="icon sq" style="width:40px;height:40px;background:${p[3]};font-size:19px;margin-bottom:16px">${p[2]}</div>
+      <div style="font-size:17px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p[0]}</div>
+      <div class="grey" style="font-size:14px">${p[1]}</div>
+    </div>`).join('')}</div>
+</div>`;
+}
+
+function Trade(){
+  return `<div class="scroll">
+  <div class="pad row" style="align-items:flex-start;justify-content:space-between;padding-top:4px">
+    <div><h2 style="margin:0;font-size:25px;font-weight:700;letter-spacing:-.4px">Hot Markets</h2>
+      <div class="grey" style="font-size:13px;margin-top:3px">👤 Based on trader activity</div></div>
+    <button class="icon" style="width:40px;height:40px;background:var(--card);font-size:17px">♡</button>
+  </div>
+  <div class="hs pad" style="margin-top:14px">
+    ${[['AI','0.234782',27.97,'6.7k traders in 4h','cat',9],['microduck','0.035752',139.3,'4.1k traders in 4h','duck',21]].map(m=>`
+      <div class="card" style="min-width:280px;flex:none;overflow:hidden">
+        <div class="row" style="gap:10px;padding:14px">
+          ${tok(m[4],38)}
+          <div style="flex:1;min-width:0"><div class="sym">${m[0]}</div>
+            <div class="mc tabular">$${m[1]} · ${chg(m[2])}</div></div>
+          ${spark(m[5],96,34)}
+        </div>
+        <div class="row" style="gap:8px;border-top:1px solid #2A2A2E;padding:12px 14px;font-size:14px">↗ ${m[3]}</div>
+      </div>`).join('')}
+  </div>
+  ${head('Explore Markets')}
+  <div class="hs pad">
+    <button class="icon" style="width:38px;height:38px;background:var(--card);flex:none">♡</button>
+    ${['Trending','Perps','Robinhood Charts','New'].map(f=>`<button class="filter ${S.filter===f?'on':''}" data-filter="${f}">${f}</button>`).join('')}
+  </div>
+  <div style="margin-top:8px">${trending.map(tokenRow).join('')}</div>
+</div>`;
+}
+
+function Predict(){
+  const mm=String(Math.floor(S.countdown/60)).padStart(2,'0'), ss=String(S.countdown%60).padStart(2,'0');
+  return `<div class="scroll">
+  ${head('Upcoming')}
+  <div class="hs pad">${[['Italian Grand Prix 2026','in 6d','🏎️','#F5C531'],['San Diego vs Chicago','in 6h','⚾','#C0142B']].map(p=>`
+    <div class="predcard" style="min-width:230px">
+      <div class="icon sq" style="width:46px;height:46px;background:${p[3]};font-size:22px;margin-bottom:18px">${p[2]}</div>
+      <div style="font-size:18px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p[0]}</div>
+      <div class="grey" style="font-size:15px;margin-top:2px">${p[1]}</div>
+    </div>`).join('')}</div>
+  ${head('Up or Down')}
+  <div class="pad"><div class="card" style="padding:14px">
+    <div class="row" style="gap:10px">
+      <div class="icon" style="width:40px;height:40px;background:#F7931A;font-size:20px">₿</div>
+      <span class="tabular" style="flex:1;font-size:21px;font-weight:600">$76,622.76</span>
+      <span class="tabular" style="font-size:18px">${mm}:${ss}</span>
+    </div>
+    ${bigline(190)}
+    <div class="row" style="gap:10px;margin-top:6px">
+      <button style="flex:1;background:var(--chip);border-radius:999px;padding:12px 0;font-size:16px"><span class="green">▲</span> Up · 0%</button>
+      <button style="flex:1;background:var(--chip);border-radius:999px;padding:12px 0;font-size:16px"><span class="red">▼</span> Down · 100%</button>
+    </div>
+  </div></div>
+  <div class="pad" style="margin-top:24px"><h2 style="margin:0;font-size:22px;font-weight:700;letter-spacing:-.4px">5 Minute Markets</h2></div>
+  <div class="hs pad" style="margin-top:10px">${[['SOL','◎','#9945FF',5],['ETH','Ξ','#2B2F36',12]].map(m=>`
+    <div class="card" style="padding:14px;min-width:215px;flex:none">
+      <div class="row" style="gap:10px;margin-bottom:10px">
+        <div class="icon" style="width:34px;height:34px;background:${m[2]};font-size:16px">${m[1]}</div>
+        <span style="font-size:16px;font-weight:600">${m[0]}</span></div>
+      ${spark(m[3],185,52,false)}
+    </div>`).join('')}</div>
+</div>`;
+}
+
+function Explore(){
+  return `<div class="scroll">
+  <div class="hs pad" style="padding-top:4px">${[['Tokens','#3DDC84','◎'],['Perps','#FBD9DE','∞'],['People','#F5C531','👤']].map(c=>`
+    <button class="card row" style="flex:none;gap:10px;padding:10px 20px 10px 10px">
+      <span class="icon sq" style="width:38px;height:38px;background:${c[1]};color:#000;font-size:17px">${c[2]}</span>
+      <span style="font-size:18px;font-weight:600">${c[0]}</span></button>`).join('')}</div>
+  ${head('Trending Tokens')}
+  <div class="pad"><div class="card" style="padding:6px 0">${exploreTrending.map(tokenRow).join('')}</div></div>
+  ${head("What's Happening")}
+  <div class="pad" style="display:flex;flex-direction:column;gap:10px">
+    ${[['33%'],['100%','60%'],['25%','20%'],['33%'],['100%','60%']].map(g=>
+      `<div style="display:flex;gap:10px">${g.map(w=>`<div class="skel" style="width:${w}"></div>`).join('')}</div>`).join('')}
+  </div>
+</div>`;
+}
+
+/* ---------------- lock screen ---------------- */
+const LETTERS = {1:'',2:'ABC',3:'DEF',4:'GHI',5:'JKL',6:'MNO',7:'PQRS',8:'TUV',9:'WXYZ',0:''};
+function Lock(){
+  const title = S.mode==='create' ? 'Create a Passcode'
+              : S.mode==='confirm' ? 'Re-enter your Passcode'
+              : 'Enter Passcode';
+  const dots = [0,1,2,3,4,5].map(i=>`<div class="dot ${i<S.buffer.length?'on':''}"></div>`).join('');
+  const keys = [1,2,3,4,5,6,7,8,9].map(n=>
+    `<button class="key" data-key="${n}"><b>${n}</b>${LETTERS[n]?`<i>${LETTERS[n]}</i>`:''}</button>`).join('');
+  return `<div class="lock">
+    <h1>${title}</h1>
+    <div class="hint ${S.shake?'':''}">${S.hint||(S.mode==='create'?'This code unlocks the app on this device.':'')}</div>
+    <div class="dots ${S.shake?'shake':''}">${dots}</div>
+    <div class="keys">${keys}</div>
+    <div class="keyrow">
+      <button data-key="noop"></button>
+      <button class="key" data-key="0"><b>0</b></button>
+      <button style="color:#fff" data-key="del">${S.buffer.length?'Delete':''}</button>
+    </div>
+  </div>`;
+}
+
+function pressKey(k){
+  S.hint=''; S.shake=false;
+  if(k==='noop') return;
+  if(k==='del'){ S.buffer=S.buffer.slice(0,-1); return render(); }
+  if(S.buffer.length>=6) return;
+  S.buffer += k;
+  render();
+  if(S.buffer.length===6) setTimeout(commit,140);
+}
+
+function commit(){
+  const code = S.buffer;
+  if(S.mode==='create'){
+    S.firstEntry=code; S.buffer=''; S.mode='confirm'; return render();
+  }
+  if(S.mode==='confirm'){
+    if(code===S.firstEntry){
+      store.set('pin',code);
+      S.buffer=''; S.locked=false; S.mode='unlock';
+    } else {
+      S.buffer=''; S.firstEntry=''; S.mode='create';
+      S.hint='Passcodes did not match. Start again.'; S.shake=true;
+    }
+    return render();
+  }
+  if(code===store.get('pin',null)){
+    S.buffer=''; S.locked=false;
+  } else {
+    S.buffer=''; S.hint='Incorrect passcode. Try again.'; S.shake=true;
+  }
+  render();
+}
+
+function lockNow(){
+  S.locked=true; S.buffer=''; S.hint=''; S.menu=false; S.editing=false; S.settings=false;
+  S.mode = store.get('pin',null) ? 'unlock' : 'create';
+  render();
+}
+
+/* ---------------- shell ---------------- */
+function render(){
+  const screens={Home,Trade,Predict,Explore};
+  document.getElementById('app').innerHTML = S.locked ? Lock() : `
+  <div class="nav">
+    <button data-act="menu">${avatar(44)}</button>
+    ${['Home','Trade','Predict','Explore'].map(t=>`<button class="tab ${S.tab===t?'on':''}" data-tab="${t}">${t}</button>`).join('')}
+  </div>
+  <main>${screens[S.tab]()}</main>
+  <div class="bottom">
+    <div class="search">🔍 Search Phantom</div>
+    <button class="fab" data-act="edit">+</button>
+  </div>
+
+  ${S.menu?`<div class="overlay">
+    <div class="scrim" data-act="closemenu"></div>
+    <div class="menu">
+      <div class="row" style="justify-content:space-between;align-items:flex-start">
+        ${avatar(62)}
+        <button class="icon" style="width:42px;height:42px;background:var(--chip);font-size:16px">⧉</button>
+      </div>
+      <div style="font-size:30px;font-weight:700;margin-top:14px">@JCS17</div>
+      <button style="color:var(--purple);font-size:16px;margin-top:12px">✕ Connect your X account</button>
+      <button class="row" style="gap:14px;margin-top:34px;font-size:20px;font-weight:600">
+        <span class="icon" style="width:32px;height:32px;background:var(--chip);font-size:12px">A1</span> Account 1 ⌄
+      </button>
+      <nav><button>👤 Profile</button><button>💬 Chats</button><button>♡ Watchlist</button><button>🕐 History</button></nav>
+      <div class="menuend">
+        <button data-act="settings">⚙️ Settings</button>
+        <button data-act="lock">🔒 Lock now</button>
+      </div>
+    </div></div>`:''}
+
+  ${S.editing?`<div class="overlay" style="z-index:30">
+    <div class="scrim" data-act="close"></div>
+    <div class="sheet">
+      <div class="grab"></div>
+      <h3 style="margin:0;font-size:21px;font-weight:700">Set your balance</h3>
+      <p class="grey" style="margin:4px 0 0;font-size:14px">Practice money. Nothing here is real.</p>
+      <label class="label">Cash</label>
+      <div class="field"><span class="grey" style="font-size:19px">$</span><input id="cashIn" inputmode="decimal" value="${S.cash}"></div>
+      <label class="label">Solana</label>
+      <div class="field"><input id="solIn" inputmode="decimal" value="${S.sol}"><span class="grey" style="font-size:15px">SOL</span></div>
+      <div class="quick">${[100,1000,10000,100000].map(v=>`<button data-quick="${v}">$${v>=1000?(v/1000)+'k':v}</button>`).join('')}</div>
+      <button class="save" data-act="save">Save balance</button>
+    </div></div>`:''}
+
+  ${S.settings?`<div class="overlay" style="z-index:30">
+    <div class="scrim" data-act="close"></div>
+    <div class="sheet">
+      <div class="grab"></div>
+      <h3 style="margin:0;font-size:21px;font-weight:700">Passcode</h3>
+      <p class="grey" style="margin:4px 0 14px;font-size:14px">Six digits, stored on this device only.</p>
+      <button class="ghost" data-act="changepin">Change passcode</button>
+      <button class="ghost" data-act="lock">Lock now</button>
+      <button class="save" data-act="close">Done</button>
+    </div></div>`:''}`;
+}
+
+/* ---------------- events ---------------- */
+document.addEventListener('click', e => {
+  const el = e.target.closest('[data-key],[data-tab],[data-act],[data-filter],[data-quick]');
+  if(!el) return;
+  if(el.dataset.key)    return pressKey(el.dataset.key);
+  if(el.dataset.tab)    { S.tab=el.dataset.tab; return render(); }
+  if(el.dataset.filter) { S.filter=el.dataset.filter; return render(); }
+  if(el.dataset.quick)  { document.getElementById('cashIn').value=el.dataset.quick; return; }
+
+  switch(el.dataset.act){
+    case 'menu': S.menu=true; break;
+    case 'closemenu': S.menu=false; break;
+    case 'edit': S.editing=true; break;
+    case 'close': S.editing=false; S.settings=false; break;
+    case 'settings': S.menu=false; S.settings=true; break;
+    case 'lock': S.settings=false; return lockNow();
+    case 'changepin':
+      S.settings=false; S.menu=false; store.del('pin');
+      S.mode='create'; S.buffer=''; S.firstEntry=''; S.locked=true; S.hint='Choose a new passcode.';
+      break;
+    case 'save': {
+      const c=parseFloat(document.getElementById('cashIn').value);
+      const s=parseFloat(document.getElementById('solIn').value);
+      S.cash=isFinite(c)?Math.max(0,c):0;
+      S.sol =isFinite(s)?Math.max(0,s):0;
+      store.set('cash',S.cash); store.set('sol',S.sol);
+      S.editing=false;
+      break;
+    }
+  }
+  render();
+});
+
+document.addEventListener('keydown', e => {
+  if(!S.locked) return;
+  if(/^[0-9]$/.test(e.key)) pressKey(e.key);
+  else if(e.key==='Backspace') pressKey('del');
+});
+
+/* re-lock when the app is backgrounded */
+let hiddenAt = 0;
+document.addEventListener('visibilitychange', () => {
+  if(document.hidden){ hiddenAt = Date.now(); }
+  else if(!S.locked && hiddenAt && Date.now()-hiddenAt > 15000){ lockNow(); }
+});
+
+setInterval(() => {
+  S.countdown = S.countdown<=0 ? 300 : S.countdown-1;
+  if(!S.locked && S.tab==='Predict' && !S.editing && !S.menu && !S.settings) render();
+}, 1000);
+
+render();
+
+if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script>
+</body>
+</html>
