@@ -1,4 +1,4 @@
-const CACHE = 'paper-wallet-v1';
+const CACHE = 'paper-wallet-v2';
 const ASSETS = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', e => {

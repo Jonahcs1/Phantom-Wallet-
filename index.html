@@ -28,7 +28,7 @@
   .app{position:relative;width:100%;max-width:390px;height:100vh;height:100dvh;margin:0 auto;
        display:flex;flex-direction:column;overflow:hidden;background:#000}
   main{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
-  .scroll{padding-bottom:120px}
+  .scroll{padding-bottom:108px}
 
   .row{display:flex;align-items:center}
   .hs{display:flex;gap:12px;overflow-x:auto;scrollbar-width:none}
@@ -73,12 +73,12 @@
   .skel{height:30px;border-radius:10px;background:var(--card)}
 
   .bottom{position:absolute;left:0;right:0;bottom:0;display:flex;gap:10px;align-items:center;
-          padding:28px 16px calc(var(--bot) + 14px);
+          padding:26px 16px max(8px, calc(var(--bot) - 22px));
           background:linear-gradient(to top,#000 58%,rgba(0,0,0,0));pointer-events:none}
   .bottom>*{pointer-events:auto}
-  .search{flex:1;height:48px;border-radius:999px;background:rgba(28,28,30,.94);backdrop-filter:blur(12px);
+  .search{flex:1;height:50px;border-radius:999px;background:rgba(28,28,30,.94);backdrop-filter:blur(12px);
           display:flex;align-items:center;gap:10px;padding:0 18px;color:var(--grey);font-size:16px}
-  .fab{width:48px;height:48px;border-radius:999px;background:var(--purple);color:#000;
+  .fab{width:50px;height:50px;border-radius:999px;background:var(--purple);color:#000;
        display:flex;align-items:center;justify-content:center;font-size:26px;flex:none}
 
   .overlay{position:absolute;inset:0;z-index:20}
@@ -167,14 +167,53 @@ function tok(kind,size=40){
 const rankColors={1:['#F5C531','#8A6A00'],2:['#D6D6DC','#6E6E76'],3:['#E9622C','#8A3208']};
 const rank = r => r?`<div class="rank" style="background:${rankColors[r][0]};border:1.4px solid ${rankColors[r][1]}">${r}</div>`:'';
 
+/* spiky-crowned avatar, matching the wallet's profile mark */
+function crown(){
+  let d='';
+  for(let i=0;i<13;i++){
+    const a0=Math.PI+(i/13)*Math.PI*2, a1=Math.PI+((i+.5)/13)*Math.PI*2;
+    const R=34,r=25,cx=50,cy=48;
+    d += `${i?'L':'M'}${(cx+Math.cos(a0)*R).toFixed(1)},${(cy+Math.sin(a0)*R).toFixed(1)}`
+      +  `L${(cx+Math.cos(a1)*r).toFixed(1)},${(cy+Math.sin(a1)*r).toFixed(1)}`;
+  }
+  return d+'Z';
+}
 const avatar = (size=44) => `
-<div class="icon" style="width:${size}px;height:${size}px;background:#7ACFA8;align-items:flex-end">
-  <div style="position:relative;width:${size*.62}px;height:${size*.72}px;background:#FFF6C4;
-       border-radius:${size*.31}px ${size*.31}px ${size*.1}px ${size*.1}px">
-    <i style="position:absolute;width:${size*.07}px;height:${size*.07}px;border-radius:50%;background:#000;left:${size*.16}px;top:${size*.34}px"></i>
-    <i style="position:absolute;width:${size*.07}px;height:${size*.07}px;border-radius:50%;background:#000;left:${size*.36}px;top:${size*.34}px"></i>
-  </div>
-</div>`;
+<svg width="${size}" height="${size}" viewBox="0 0 100 100" style="flex:none;display:block">
+  <circle cx="50" cy="50" r="50" fill="#7ACFA8"/>
+  <path d="${crown()}" fill="#F3D34A"/>
+  <path d="M24,54 a26,26 0 0 1 52,0 L76,80 a4,4 0 0 1 -6,3 a4,4 0 0 0 -6,0 a4,4 0 0 1 -6,0
+           a4,4 0 0 0 -6,0 a4,4 0 0 1 -6,0 a4,4 0 0 0 -6,0 a4,4 0 0 1 -6,-3 Z" fill="#FDF7CE"/>
+  <circle cx="41" cy="55" r="3" fill="#1A1A1A"/>
+  <circle cx="59" cy="55" r="3" fill="#1A1A1A"/>
+</svg>`;
+
+const ICON = {
+  sol: n => `<span class="icon" style="width:${n}px;height:${n}px;background:#000">
+    <svg width="${n*.54}" height="${n*.42}" viewBox="0 0 398 312">
+      <defs><linearGradient id="sg" x1="0" y1="312" x2="398" y2="0" gradientUnits="userSpaceOnUse">
+        <stop offset="0" stop-color="#9945FF"/><stop offset=".5" stop-color="#14D9C4"/><stop offset="1" stop-color="#14F195"/>
+      </linearGradient></defs>
+      <path fill="url(#sg)" d="M64.6 237.9c2.4-2.4 5.7-3.8 9.2-3.8h317.4c5.8 0 8.7 7 4.6 11.1l-62.7 62.7c-2.4 2.4-5.7 3.8-9.2 3.8H6.5c-5.8 0-8.7-7-4.6-11.1l62.7-62.7z"/>
+      <path fill="url(#sg)" d="M64.6 3.8C67.1 1.4 70.4 0 73.8 0h317.4c5.8 0 8.7 7 4.6 11.1l-62.7 62.7c-2.4 2.4-5.7 3.8-9.2 3.8H6.5c-5.8 0-8.7-7-4.6-11.1L64.6 3.8z"/>
+      <path fill="url(#sg)" d="M333.1 120.1c-2.4-2.4-5.7-3.8-9.2-3.8H6.5c-5.8 0-8.7 7-4.6 11.1l62.7 62.7c2.4 2.4 5.7 3.8 9.2 3.8h317.4c5.8 0 8.7-7 4.6-11.1l-62.7-62.7z"/>
+    </svg></span>`,
+  btc: n => `<span class="icon" style="width:${n}px;height:${n}px;background:#F7931A;color:#fff;font-size:${n*.55}px;font-weight:600">₿</span>`,
+  eth: n => `<span class="icon" style="width:${n}px;height:${n}px;background:transparent">
+    <svg width="${n*.62}" height="${n*.9}" viewBox="0 0 100 160">
+      <path d="M50 0 L96 78 L50 104 L4 78 Z" fill="#4E5A5A"/>
+      <path d="M50 0 L4 78 L50 104 Z" fill="#7E8E8B"/>
+      <path d="M50 114 L96 88 L50 160 L4 88 Z" fill="#4E5A5A"/>
+      <path d="M50 114 L4 88 L50 160 Z" fill="#7E8E8B"/>
+    </svg></span>`,
+  zec: n => `<span class="icon" style="width:${n}px;height:${n}px;background:#F4B728;color:#fff;font-size:${n*.5}px;font-weight:700">Z</span>`,
+  cash: n => `<span class="icon sq" style="width:${n}px;height:${n}px;background:#2C2C2E">
+    <svg width="${n*.62}" height="${n*.62}" viewBox="0 0 24 24" fill="none" stroke="#9A9AA0" stroke-width="1.6">
+      <rect x="2" y="6" width="20" height="12" rx="2.5"/><circle cx="12" cy="12" r="2.6"/>
+    </svg></span>`,
+  search: n => `<svg width="${n}" height="${n}" viewBox="0 0 24 24" fill="none" stroke="#8E8E93"
+      stroke-width="2" stroke-linecap="round" style="flex:none"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.6-3.6"/></svg>`
+};
 
 function walk(seed,n,drift){ let x=seed,v=50; const o=[];
   for(let i=0;i<n;i++){ x=(x*1103515245+12345)%2147483648; v+=((x/2147483648)-.5)*9+drift; o.push(v);} return o; }
@@ -226,7 +265,7 @@ function Home(){
   <div class="pad" style="padding-top:6px">
     <button class="grey" style="font-size:16px">Account 1 ⌄</button>
     <button data-act="edit" style="display:block;width:100%;text-align:left;margin-top:4px">
-      <div class="row" style="gap:10px"><span class="balance tabular">${usd(t)}</span><span class="editdot">✎</span></div>
+      <div class="row"><span class="balance tabular">${usd(t)}</span></div>
       <div class="row" style="gap:8px;margin-top:10px">
         <span class="red tabular" style="font-size:16px">-$${Math.abs(delta).toFixed(6)}</span>
         <span class="pill tabular">${pct.toFixed(2)}%</span>
@@ -235,22 +274,22 @@ function Home(){
   </div>
   <div class="pad" style="margin-top:22px">
     <div class="card row" style="padding:16px;gap:12px">
-      <div class="icon sq" style="width:38px;height:38px;background:#2C2C2E;font-size:17px">💵</div>
+      ${ICON.cash(38)}
       <span style="flex:1;font-size:18px;font-weight:600">Cash</span>
       <span class="tabular" style="font-size:18px">${usd(S.cash)}</span>
     </div>
   </div>
   ${head('Tokens')}
   <div class="pad"><div class="card row" style="padding:13px 16px;gap:12px">
-    <div class="icon" style="width:38px;height:38px;background:linear-gradient(135deg,#9945FF,#14F195);font-size:16px;font-weight:700">◎</div>
+    ${ICON.sol(38)}
     <div style="flex:1"><div class="sym">Solana</div><div class="mc tabular">${S.sol.toFixed(5)} SOL</div></div>
     <div style="text-align:right"><div class="price tabular">${usd(S.sol*SOL_PRICE)}</div>
       <div class="red" style="font-size:13px">-&lt;$0.01</div></div>
   </div></div>
   ${head('Perps')}
-  <div class="hs pad">${[['BTC','40x',-1.57,'₿','#F7931A'],['ETH','25x',-3.22,'Ξ','#2B2F36'],['HYPE','20x',-2.41,'H','#97FCE4']].map(p=>`
+  <div class="hs pad">${[['BTC','40x',-1.57,'btc'],['ETH','25x',-3.22,'eth'],['ZEC','20x',-2.41,'zec']].map(p=>`
     <div class="perp">
-      <div class="icon" style="width:40px;height:40px;background:${p[4]};font-size:19px;margin-bottom:18px">${p[3]}</div>
+      <div style="margin-bottom:18px">${ICON[p[3]](40)}</div>
       <div class="row" style="gap:7px"><span style="font-size:18px;font-weight:600">${p[0]}</span><span class="lev">${p[1]}</span></div>
       ${chg(p[2])}
     </div>`).join('')}</div>
@@ -305,7 +344,7 @@ function Predict(){
   ${head('Up or Down')}
   <div class="pad"><div class="card" style="padding:14px">
     <div class="row" style="gap:10px">
-      <div class="icon" style="width:40px;height:40px;background:#F7931A;font-size:20px">₿</div>
+      ${ICON.btc(40)}
       <span class="tabular" style="flex:1;font-size:21px;font-weight:600">$76,622.76</span>
       <span class="tabular" style="font-size:18px">${mm}:${ss}</span>
     </div>
@@ -316,12 +355,12 @@ function Predict(){
     </div>
   </div></div>
   <div class="pad" style="margin-top:24px"><h2 style="margin:0;font-size:22px;font-weight:700;letter-spacing:-.4px">5 Minute Markets</h2></div>
-  <div class="hs pad" style="margin-top:10px">${[['SOL','◎','#9945FF',5],['ETH','Ξ','#2B2F36',12]].map(m=>`
+  <div class="hs pad" style="margin-top:10px">${[['SOL','sol',5],['ETH','eth',12]].map(m=>`
     <div class="card" style="padding:14px;min-width:215px;flex:none">
       <div class="row" style="gap:10px;margin-bottom:10px">
-        <div class="icon" style="width:34px;height:34px;background:${m[2]};font-size:16px">${m[1]}</div>
+        ${ICON[m[1]](34)}
         <span style="font-size:16px;font-weight:600">${m[0]}</span></div>
-      ${spark(m[3],185,52,false)}
+      ${spark(m[2],185,52,false)}
     </div>`).join('')}</div>
 </div>`;
 }
@@ -413,7 +452,7 @@ function render(){
   </div>
   <main>${screens[S.tab]()}</main>
   <div class="bottom">
-    <div class="search">🔍 Search Phantom</div>
+    <div class="search">${ICON.search(19)} Search Phantom</div>
     <button class="fab" data-act="edit">+</button>
   </div>
 
